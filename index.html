@@ -3,966 +3,1412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnackDashboard - Sistema de Ventas</title>
-    <!-- Bootstrap 5 CSS -->
+    <title>SnackFlow - Dashboard y Registro de Ventas</title>
+    <!-- Bootstrap 5 CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Google Fonts -->
+    <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
+    <!-- Chart.js para reportes visuales -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         :root {
-            --bs-primary: #ff6b6b;
-            --bs-primary-rgb: 255, 107, 107;
-            --bs-secondary: #4ecdc4;
             --sidebar-width: 260px;
+            --sidebar-collapsed-width: 70px;
+            --primary-color: #ff5722;
+            --primary-hover: #f4511e;
+            --bg-body: #f8f9fa;
+            --card-border: rgba(0,0,0,0.08);
         }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
+            background-color: var(--bg-body);
+            color: #334155;
+            overflow-x: hidden;
         }
-        /* Sidebar styles */
+
+        /* Sidebar Styling */
         #sidebar {
             width: var(--sidebar-width);
+            min-height: 100vh;
             position: fixed;
             top: 0;
             left: 0;
-            height: 100vh;
-            z-index: 1000;
-            background: #212529;
-            color: #fff;
+            z-index: 1040;
+            background: #1e293b;
+            color: #cbd5e1;
             transition: all 0.3s ease;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.05);
         }
-        #sidebar .brand {
-            padding: 1.5rem;
+
+        #sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        #sidebar .sidebar-brand {
+            padding: 1.5rem 1rem;
             font-size: 1.25rem;
             font-weight: 700;
-            color: #ff6b6b;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            background: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
+
+        #sidebar.collapsed .sidebar-brand span,
+        #sidebar.collapsed .menu-text,
+        #sidebar.collapsed .sidebar-header {
+            display: none !important;
+        }
+
         #sidebar .nav-link {
-            color: #adb5bd;
-            padding: 0.85rem 1.5rem;
-            margin: 0.2rem 0.75rem;
+            color: #94a3b8;
+            padding: 0.85rem 1.25rem;
+            margin: 0.25rem 0.75rem;
             border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
             font-weight: 500;
-            transition: all 0.2s;
+            transition: all 0.2s ease-in-out;
         }
+
         #sidebar .nav-link:hover, #sidebar .nav-link.active {
             color: #fff;
-            background-color: rgba(255, 107, 107, 0.2);
-            border-left: 4px solid #ff6b6b;
+            background-color: var(--primary-color);
+            transform: translateX(3px);
         }
+
         #sidebar .nav-link i {
-            margin-right: 0.75rem;
+            font-size: 1.2rem;
+            min-width: 30px;
         }
-        /* Main Content wrapper */
+
+        /* Main Content Styling */
         #content {
             margin-left: var(--sidebar-width);
-            min-height: 100vh;
             transition: all 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        .navbar-top {
+
+        #content.expanded {
+            margin-left: var(--sidebar-collapsed-width);
+        }
+
+        /* Top Navbar */
+        .top-navbar {
+            height: 70px;
             background: #ffffff;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
         }
-        /* Card custom styles */
-        .card-metric {
+
+        /* KPI Cards */
+        .kpi-card {
             border: none;
-            border-radius: 0.75rem;
-            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
-            transition: transform 0.2s;
-        }
-        .card-metric:hover {
-            transform: translateY(-3px);
-        }
-        /* Product Card in POS */
-        .product-card {
-            cursor: pointer;
-            border: 1px solid #dee2e6;
-            transition: all 0.2s;
-            border-radius: 0.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: #ffffff;
+            position: relative;
             overflow: hidden;
         }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08);
+        }
+
+        .kpi-card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+
+        .kpi-primary::after { background-color: #ff5722; }
+        .kpi-success::after { background-color: #10b981; }
+        .kpi-warning::after { background-color: #f59e0b; }
+        .kpi-info::after { background-color: #3b82f6; }
+
+        /* Product Cards in Catalog & POS */
+        .product-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+
         .product-card:hover {
-            border-color: #ff6b6b;
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.06);
+            border-color: #cbd5e1;
         }
-        .product-img {
-            height: 120px;
+
+        .product-img-container {
+            height: 140px;
+            overflow: hidden;
+            position: relative;
+            background: #f1f5f9;
+        }
+
+        .product-img-container img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
+            transition: transform 0.3s;
         }
-        /* Responsive tweaks */
+
+        .product-card:hover .product-img-container img {
+            transform: scale(1.05);
+        }
+
+        /* Custom Scrollbar for tables and lists */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        /* Toast Container */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1090;
+        }
+
+        /* Responsive Breakpoints */
         @media (max-width: 991.98px) {
             #sidebar {
-                margin-left: calc(-1 * var(--sidebar-width));
+                margin-left: calc(var(--sidebar-width) * -1);
             }
-            #sidebar.show {
+            #sidebar.mobile-show {
                 margin-left: 0;
             }
             #content {
-                margin-left: 0;
+                margin-left: 0 !important;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR -->
-    <nav id="sidebar" class="d-flex flex-column">
-        <div class="brand d-flex align-items-center justify-content-between">
-            <span><i class="bi bi-shop me-2"></i>SnackExpress</span>
-            <button class="btn btn-sm text-white d-lg-none" onclick="toggleSidebar()"><i class="bi bi-x fs-5"></i></button>
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar">
+        <div class="sidebar-brand">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-shop-window text-warning fs-4"></i>
+                <span class="fs-5 tracking-wide">SnackFlow</span>
+            </div>
+            <button class="btn btn-sm text-white d-none d-lg-block" id="sidebarToggleBtn">
+                <i class="bi bi-list fs-5"></i>
+            </button>
         </div>
-        <ul class="nav nav-pills flex-column mb-auto mt-3">
-            <li class="nav-item">
-                <a href="#" class="nav-link active" onclick="switchView('dashboard', this)">
-                    <i class="bi bi-speedometer2"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="switchView('pos', this)">
-                    <i class="bi bi-cart-plus"></i> Nueva Venta (POS)
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="switchView('reports', this)">
-                    <i class="bi bi-graph-up-arrow"></i> Reportes de Ventas
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="switchView('cancellations', this)">
-                    <i class="bi bi-x-octagon text-danger"></i> Anular Tickets
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="switchView('foods', this)">
-                    <i class="bi bi-egg-fried"></i> Gestión de Comidas
-                </a>
-            </li>
-        </ul>
-        <div class="p-3 border-top border-secondary text-center small text-muted">
-            SnackSystem v2.5 - Bs. Edition
+        
+        <div class="p-3">
+            <div class="sidebar-header text-uppercase fs-7 text-secondary fw-bold mb-2 px-3 small">Principal</div>
+            <ul class="nav flex-column gap-1">
+                <li class="nav-item">
+                    <a href="#dashboard" class="nav-link active" data-section="dashboard-section">
+                        <i class="bi bi-speedometer2"></i>
+                        <span class="menu-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#pos" class="nav-link" data-section="pos-section">
+                        <i class="bi bi-cash-coin"></i>
+                        <span class="menu-text">Registrar Venta (POS)</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-header text-uppercase fs-7 text-secondary fw-bold mt-4 mb-2 px-3 small">Gestión</div>
+            <ul class="nav flex-column gap-1">
+                <li class="nav-item">
+                    <a href="#menu" class="nav-link" data-section="menu-section">
+                        <i class="bi bi-egg-fried"></i>
+                        <span class="menu-text">Catálogo de Comidas</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#reports" class="nav-link" data-section="reports-section">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span class="menu-text">Reportes de Ventas</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="mt-5 pt-4 border-top border-secondary opacity-75 px-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-success rounded-circle" style="width: 10px; height: 10px;"></div>
+                    <small class="text-white menu-text">Sistema en Línea</small>
+                </div>
+                <small class="text-muted d-block mt-1 menu-text" style="font-size: 0.75rem;">v2.5 Enterprise</small>
+            </div>
         </div>
     </nav>
 
-    <!-- MAIN CONTENT -->
+    <!-- Main Content Wrapper -->
     <div id="content">
-        <!-- TOP NAVBAR -->
-        <nav class="navbar navbar-top navbar-expand px-4 py-3">
-            <div class="container-fluid ps-0">
-                <button class="btn btn-outline-dark d-lg-none me-3" onclick="toggleSidebar()">
-                    <i class="bi bi-list"></i>
+        <!-- Top Navbar -->
+        <header class="top-navbar shadow-sm">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-outline-secondary border-0 d-lg-none" id="sidebarMobileToggle">
+                    <i class="bi bi-list fs-4"></i>
                 </button>
-                <span class="navbar-brand mb-0 h5 fw-bold text-secondary" id="page-title">Dashboard General</span>
-                <div class="ms-auto d-flex align-items-center">
-                    <span class="badge bg-light text-dark border p-2"><i class="bi bi-calendar-event me-1"></i> <span id="current-date-display"></span></span>
+                <h5 class="m-0 fw-bold text-dark" id="currentSectionTitle">Dashboard General</h5>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="btn btn-light border dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-3 py-1" type="button" data-bs-toggle="dropdown">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content: center" style="width: 32px; height: 32px; font-weight: 600;">
+                            SF
+                        </div>
+                        <span class="d-none d-md-inline fw-medium text-dark">Administrador</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                        <li><a class="dropdown-item" href="#reports" onclick="switchSection('reports-section')"><i class="bi bi-file-earmark-text me-2"></i>Ver Reportes</a></li>
+                        <li><a class="dropdown-item" href="#menu" onclick="switchSection('menu-section')"><i class="bi bi-gear me-2"></i>Gestionar Menú</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="resetSampleData()"><i class="bi bi-arrow-counterclockwise me-2"></i>Restaurar Datos de Prueba</a></li>
+                    </ul>
                 </div>
             </div>
-        </nav>
+        </header>
 
-        <!-- VIEWS CONTAINER -->
+        <!-- Dynamic Content Sections -->
         <main class="container-fluid p-4">
 
-            <!-- 1. DASHBOARD VIEW -->
-            <section id="view-dashboard" class="app-view">
-                <div class="row g-3 mb-4">
-                    <div class="col-xl-3 col-sm-6">
-                        <div class="card card-metric bg-white p-3 border-start border-primary border-4">
-                            <div class="text-muted small">Ventas de Hoy</div>
-                            <div class="fs-4 fw-bold text-dark mt-1" id="dash-today-sales">Bs. 0.00</div>
-                            <div class="text-success small mt-1"><i class="bi bi-arrow-up-right"></i> Ingresos diarios</div>
+            <!-- SECTION 1: DASHBOARD -->
+            <section id="dashboard-section" class="app-section">
+                <!-- KPI Cards Row -->
+                <div class="row g-4 mb-4">
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card kpi-card kpi-primary p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted text-uppercase fs-7 fw-semibold">Ventas del Día</span>
+                                    <h3 class="fw-bold mt-2 mb-0" id="kpiDailySales">0.00 Bs</h3>
+                                    <small class="text-success fw-medium" id="kpiDailyCount">0 transacciones hoy</small>
+                                </div>
+                                <div class="bg-light-primary p-3 rounded-4 text-primary bg-opacity-10" style="background: rgba(255, 87, 34, 0.1);">
+                                    <i class="bi bi-calendar-day fs-3 text-primary" style="color: var(--primary-color) !important;"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-sm-6">
-                        <div class="card card-metric bg-white p-3 border-start border-success border-4">
-                            <div class="text-muted small">Ventas del Mes</div>
-                            <div class="fs-4 fw-bold text-dark mt-1" id="dash-month-sales">Bs. 0.00</div>
-                            <div class="text-success small mt-1"><i class="bi bi-calendar-month"></i> Acumulado mensual</div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card kpi-card kpi-success p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted text-uppercase fs-7 fw-semibold">Ventas del Mes</span>
+                                    <h3 class="fw-bold mt-2 mb-0" id="kpiMonthlySales">0.00 Bs</h3>
+                                    <small class="text-success fw-medium" id="kpiMonthlyCount">Este mes actual</small>
+                                </div>
+                                <div class="p-3 rounded-4 bg-success bg-opacity-15" style="background: rgba(16, 185, 129, 0.1);">
+                                    <i class="bi bi-calendar-month fs-3 text-success"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-sm-6">
-                        <div class="card card-metric bg-white p-3 border-start border-warning border-4">
-                            <div class="text-muted small">Tickets Emitidos (Hoy)</div>
-                            <div class="fs-4 fw-bold text-dark mt-1" id="dash-today-tickets">0</div>
-                            <div class="text-muted small mt-1">Transacciones del día</div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card kpi-card kpi-warning p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted text-uppercase fs-7 fw-semibold">Ventas del Año</span>
+                                    <h3 class="fw-bold mt-2 mb-0" id="kpiYearlySales">0.00 Bs</h3>
+                                    <small class="text-muted" id="kpiYearlyCount">Acumulado anual</small>
+                                </div>
+                                <div class="p-3 rounded-4" style="background: rgba(245, 158, 11, 0.1);">
+                                    <i class="bi bi-calendar-check fs-3 text-warning"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-sm-6">
-                        <div class="card card-metric bg-white p-3 border-start border-info border-4">
-                            <div class="text-muted small">Platos Registrados</div>
-                            <div class="fs-4 fw-bold text-dark mt-1" id="dash-total-foods">0</div>
-                            <div class="text-muted small mt-1">En catálogo activo</div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card kpi-card kpi-info p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted text-uppercase fs-7 fw-semibold">Productos en Menú</span>
+                                    <h3 class="fw-bold mt-2 mb-0" id="kpiProductsCount">0</h3>
+                                    <small class="text-info fw-medium">Platos y snacks activos</small>
+                                </div>
+                                <div class="p-3 rounded-4" style="background: rgba(59, 130, 246, 0.1);">
+                                    <i class="bi bi-basket fs-3 text-info"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gráficos y Actividad Reciente -->
-                <div class="row g-4">
+                <!-- Charts & Quick POS Banner -->
+                <div class="row g-4 mb-4">
                     <div class="col-lg-8">
-                        <div class="card border-0 shadow-sm p-4 h-100">
-                            <h5 class="card-title fw-bold mb-3">Tendencia de Ventas (Últimos 7 días)</h5>
-                            <div style="position: relative; height:300px; width:100%">
-                                <canvas id="salesChart"></canvas>
+                        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold m-0">Tendencia de Ingresos Diarios (Últimos 7 días)</h5>
+                                <span class="badge bg-light text-secondary border">Actualizado en tiempo real</span>
+                            </div>
+                            <div style="height: 300px; position: relative;">
+                                <canvas id="dashboardTrendChart"></canvas>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-4">
-                        <div class="card border-0 shadow-sm p-4 h-100">
-                            <h5 class="card-title fw-bold mb-3">Últimas Transacciones</h5>
-                            <div class="list-group list-group-flush" id="dash-recent-list">
+                        <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-gradient text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                            <div class="d-flex flex-column h-100 justify-content-between">
+                                <div>
+                                    <span class="badge bg-warning text-dark fw-semibold mb-2">Acceso Rápido</span>
+                                    <h4 class="fw-bold">Punto de Venta (POS)</h4>
+                                    <p class="text-light opacity-75 small mt-2">Registra pedidos de forma ágil, selecciona productos del menú y emite tickets de venta instantáneos.</p>
+                                </div>
+                                <div class="mt-4">
+                                    <button class="btn btn-warning w-100 py-2 fw-bold text-dark rounded-pill shadow" onclick="switchSection('pos-section')">
+                                        <i class="bi bi-cart-plus-fill me-2"></i>Ir a Registrar Venta
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions Table -->
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0">Últimas Ventas Registradas</h5>
+                        <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="switchSection('reports-section')">Ver Todas</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID / Fecha</th>
+                                    <th>Productos</th>
+                                    <th>Total</th>
+                                    <th>Método Pago</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentSalesTableBody">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: POS (REGISTRAR VENTA) -->
+            <section id="pos-section" class="app-section d-none">
+                <div class="row g-4">
+                    <!-- Catálogo Selector -->
+                    <div class="col-lg-7">
+                        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold m-0"><i class="bi bi-grid me-2 text-primary"></i>Seleccionar Productos</h5>
+                                <div class="input-group input-group-sm w-auto">
+                                    <input type="text" id="posSearchInput" class="form-control" placeholder="Buscar snack...">
+                                    <button class="btn btn-outline-secondary" type="button"><i class="bi bi-search"></i></button>
+                                </div>
+                            </div>
+                            <!-- Categorías Filter Pills -->
+                            <div class="d-flex gap-2 overflow-auto pb-2 mb-3 custom-scroll" id="posCategoryPills">
+                                <button class="btn btn-sm btn-dark rounded-pill px-3 active" onclick="filterPosCategory('Todos')">Todos</button>
+                                <!-- Dinámico por categorías -->
+                            </div>
+                            <!-- Grilla de productos para POS -->
+                            <div class="row g-3 overflow-auto custom-scroll p-1" style="max-height: 550px;" id="posProductsGrid">
                                 <!-- Dinámico -->
                             </div>
                         </div>
                     </div>
+
+                    <!-- Carrito / Orden actual -->
+                    <div class="col-lg-5">
+                        <div class="card border-0 shadow-sm rounded-4 p-4 h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="fw-bold m-0"><i class="bi bi-receipt me-2 text-primary"></i>Orden Actual</h5>
+                                    <button class="btn btn-sm btn-outline-danger border-0" onclick="clearCart()"><i class="bi bi-trash me-1"></i>Vaciar</button>
+                                </div>
+                                <hr class="text-muted">
+                                <!-- Items del carrito -->
+                                <div class="custom-scroll mb-3" style="max-height: 300px; overflow-y: auto;" id="cartItemsContainer">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="bi bi-cart-x fs-1 opacity-50"></i>
+                                        <p class="mt-2 mb-0">La orden está vacía.<br>Selecciona productos del menú.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="bg-light p-3 rounded-3 mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Subtotal:</span>
+                                        <span class="fw-semibold" id="cartSubtotal">0.00 Bs</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Impuestos (0%):</span>
+                                        <span class="fw-semibold">0.00 Bs</span>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="d-flex justify-content-between fs-5 fw-bold text-dark">
+                                        <span>Total a Pagar:</span>
+                                        <span class="text-primary" id="cartTotal">0.00 Bs</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-muted">Método de Pago</label>
+                                    <select class="form-select form-select-sm" id="paymentMethodSelect">
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Tarjeta">Tarjeta de Crédito / Débito</option>
+                                        <option value="QR / Transferencia">QR / Transferencia Bancaria</option>
+                                    </select>
+                                </div>
+
+                                <button class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm" id="checkoutBtn" onclick="processCheckout()" disabled>
+                                    <i class="bi bi-check-circle-fill me-2"></i>Completar Venta
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <!-- 2. POS / REGISTRO DE VENTAS VIEW -->
-            <section id="view-pos" class="app-view d-none">
-                <div class="row g-4">
-                    <!-- Catálogo de Comidas -->
-                    <div class="col-lg-7">
-                        <div class="card border-0 shadow-sm p-3 mb-3">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                                <input type="text" id="pos-search" class="form-control border-start-0" placeholder="Buscar comida o snack..." oninput="filterPOSProducts()">
-                            </div>
+            <!-- SECTION 3: GESTIÓN DE MENÚ Y COMIDAS -->
+            <section id="menu-section" class="app-section d-none">
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div>
+                            <h4 class="fw-bold m-0">Catálogo de Comidas y Snacks</h4>
+                            <p class="text-muted small m-0">Agrega, edita o elimina platos y bebidas disponibles en el sistema.</p>
                         </div>
-                        <div class="row g-3 overflow-y-auto" style="max-height: 65vh;" id="pos-products-grid">
-                            <!-- Productos dinámicos -->
-                        </div>
+                        <button class="btn btn-primary rounded-pill px-4 fw-semibold" onclick="openProductModal()">
+                            <i class="bi bi-plus-lg me-2"></i>Nueva Comida / Snack
+                        </button>
                     </div>
-                    <!-- Carrito / Factura -->
-                    <div class="col-lg-5">
-                        <div class="card border-0 shadow-sm p-4 d-flex flex-column h-100">
-                            <h4 class="fw-bold mb-3"><i class="bi bi-receipt me-2"></i>Ticket de Venta</h4>
-                            <div class="table-responsive flex-grow-1" style="max-height: 40vh; overflow-y: auto;">
-                                <table class="table table-sm align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Item</th>
-                                            <th class="text-center">Cant</th>
-                                            <th class="text-end">Subtotal</th>
-                                            <th class="text-end"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="cart-table-body">
-                                        <tr><td colspan="4" class="text-center text-muted py-4">El carrito está vacío</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <hr>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Subtotal:</span>
-                                <span id="cart-subtotal" class="fw-semibold">Bs. 0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-3">
-                                <span class="fs-5 fw-bold">Total a Pagar:</span>
-                                <span id="cart-total" class="fs-4 fw-bold text-danger">Bs. 0.00</span>
-                            </div>
-                            <button class="btn btn-primary btn-lg w-100 fw-bold shadow-sm" onclick="checkoutSale()">
-                                <i class="bi bi-cash-coin me-2"></i>Completar Venta
+                </div>
+
+                <!-- Grilla de Productos del Catálogo -->
+                <div class="row g-4" id="catalogProductsGrid">
+                    <!-- Dinámico -->
+                </div>
+            </section>
+
+            <!-- SECTION 4: REPORTES Y DETALLES DE VENTAS -->
+            <section id="reports-section" class="app-section d-none">
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                        <div>
+                            <h4 class="fw-bold m-0">Reportes y Analíticas de Ventas</h4>
+                            <p class="text-muted small m-0">Filtra y analiza los ingresos detallados por día, mes y año.</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="exportReportCSV()">
+                                <i class="bi bi-download me-1"></i>Exportar CSV
                             </button>
                         </div>
                     </div>
-                </div>
-            </section>
 
-            <!-- 3. REPORTES DE VENTAS VIEW -->
-            <section id="view-reports" class="app-view d-none">
-                <div class="card border-0 shadow-sm p-4 mb-4">
-                    <div class="row g-3 align-items-end">
+                    <!-- Filtros de Reportes -->
+                    <div class="row g-3 bg-light p-3 rounded-3 mb-4 align-items-end">
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Filtrar por:</label>
-                            <select id="report-filter-type" class="form-select" onchange="toggleReportFilterInputs()">
+                            <label class="form-label small fw-semibold text-muted">Agrupar / Filtrar por:</label>
+                            <select class="form-select form-select-sm" id="reportFilterType" onchange="toggleReportFilters()">
                                 <option value="day">Día Específico</option>
                                 <option value="month">Mes Específico</option>
                                 <option value="year">Año Específico</option>
                                 <option value="all">Histórico Completo</option>
                             </select>
                         </div>
-                        <div class="col-md-4" id="report-input-container">
-                            <!-- Input dinámico según filtro -->
+                        <div class="col-md-4" id="reportValueContainer">
+                            <label class="form-label small fw-semibold text-muted" id="reportValueLabel">Seleccionar Día</label>
+                            <input type="date" class="form-control form-control-sm" id="reportDateInput">
                         </div>
-                        <div class="col-md-5 text-md-end">
-                            <button class="btn btn-outline-secondary me-2" onclick="loadReports()"><i class="bi bi-arrow-clockwise me-1"></i> Actualizar</button>
-                            <button class="btn btn-success" onclick="exportReportsCSV()"><i class="bi bi-file-earmark-excel me-1"></i> Exportar CSV</button>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-sm w-100 fw-semibold" onclick="generateReport()">
+                                <i class="bi bi-filter me-1"></i>Generar Reporte
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                <!-- Métricas del Reporte -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <div class="card border-0 shadow-sm p-3 bg-white">
-                            <div class="text-muted small">Ingresos Totales del Periodo</div>
-                            <div class="fs-3 fw-bold text-primary mt-1" id="rep-total-income">Bs. 0.00</div>
+                    <!-- Resumen del Reporte Generado -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded-3 bg-white">
+                                <span class="text-muted small">Total Ingresos Periodo</span>
+                                <h3 class="fw-bold text-primary mt-1 mb-0" id="reportTotalRevenue">0.00 Bs</h3>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card border-0 shadow-sm p-3 bg-white">
-                            <div class="text-muted small">Total Transacciones</div>
-                            <div class="fs-3 fw-bold text-dark mt-1" id="rep-total-count">0</div>
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded-3 bg-white">
+                                <span class="text-muted small">Total Transacciones</span>
+                                <h3 class="fw-bold text-dark mt-1 mb-0" id="reportTotalTransactions">0</h3>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card border-0 shadow-sm p-3 bg-white">
-                            <div class="text-muted small">Ticket Promedio</div>
-                            <div class="fs-3 fw-bold text-info mt-1" id="rep-avg-ticket">Bs. 0.00</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tabla de Detalle -->
-                <div class="card border-0 shadow-sm p-4">
-                    <h5 class="card-title fw-bold mb-3">Detalle de Transacciones</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID Ticket</th>
-                                    <th>Fecha y Hora</th>
-                                    <th>Items Vendidos</th>
-                                    <th class="text-end">Total</th>
-                                    <th class="text-center">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reports-table-body">
-                                <tr><td colspan="5" class="text-center text-muted py-4">Seleccione un filtro para ver reportes</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 4. ANULACIÓN DE TICKETS VIEW -->
-            <section id="view-cancellations" class="app-view d-none">
-                <div class="card border-0 shadow-sm p-4 mb-4">
-                    <div class="alert alert-warning mb-3" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Regla de Anulación:</strong> Solo se permite anular tickets que correspondan estrictamente al <strong>día actual</strong>. Los tickets de días anteriores no pueden ser modificados ni eliminados.
-                    </div>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white"><i class="bi bi-upc-scan"></i></span>
-                        <input type="text" id="cancel-search-input" class="form-control border-start-0" placeholder="Ingrese ID de ticket (ej. TICKET-171...) o busque por fecha de hoy..." oninput="filterCancellationTickets()">
-                    </div>
-                </div>
-
-                <div class="card border-0 shadow-sm p-4">
-                    <h5 class="card-title fw-bold mb-3">Tickets Emitidos Hoy (Disponibles para anulación)</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID Ticket</th>
-                                    <th>Hora</th>
-                                    <th>Detalle</th>
-                                    <th class="text-end">Monto Total</th>
-                                    <th class="text-center">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cancellations-table-body">
-                                <!-- Dinámico -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 5. GESTIÓN DE COMIDAS VIEW -->
-            <section id="view-foods" class="app-view d-none">
-                <div class="row g-4">
-                    <!-- Formulario -->
-                    <div class="col-lg-4">
-                        <div class="card border-0 shadow-sm p-4">
-                            <h5 class="card-title fw-bold mb-3" id="food-form-title">Nueva Comida / Snack</h5>
-                            <form id="food-form" onsubmit="handleFoodSubmit(event)">
-                                <input type="hidden" id="food-id">
-                                <div class="mb-3">
-                                    <label class="form-label small fw-semibold">Nombre del Plato/Snack</label>
-                                    <input type="text" id="food-name" class="form-control" required placeholder="Ej. Salteña de Pollo">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label small fw-semibold">Categoría</label>
-                                    <select id="food-category" class="form-select" required>
-                                        <option value="Snacks">Snacks</option>
-                                        <option value="Comidas">Comidas Rápidas</option>
-                                        <option value="Bebidas">Bebidas</option>
-                                        <option value="Postres">Postres</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label small fw-semibold">Precio (Bs.)</label>
-                                    <input type="number" step="0.5" id="food-price" class="form-control" required placeholder="0.00">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label small fw-semibold">URL de Imagen de Ejemplo</label>
-                                    <input type="url" id="food-image" class="form-control" required placeholder="https://images.unsplash.com/photo-...">
-                                    <div class="form-text small">Use un enlace de imagen público de ejemplo.</div>
-                                </div>
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-primary fw-semibold"><i class="bi bi-save me-1"></i> Guardar Plato</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetFoodForm()">Cancelar</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    <!-- Listado de Comidas -->
-                    <div class="col-lg-8">
-                        <div class="card border-0 shadow-sm p-4">
-                            <h5 class="card-title fw-bold mb-3">Catálogo Actual de Comidas</h5>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Imagen</th>
-                                            <th>Nombre</th>
-                                            <th>Categoría</th>
-                                            <th>Precio</th>
-                                            <th class="text-center">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="foods-table-body">
-                                        <!-- Dinámico -->
-                                    </tbody>
-                                </table>
+                        <div class="col-md-4">
+                            <div class="p-3 border rounded-3 bg-white">
+                                <span class="text-muted small">Ticket Promedio</span>
+                                <h3 class="fw-bold text-success mt-1 mb-0" id="reportAverageTicket">0.00 Bs</h3>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Gráfico y Tabla del Reporte -->
+                    <div class="row g-4">
+                        <div class="col-lg-12">
+                            <div class="card border p-3 rounded-3">
+                                <h6 class="fw-bold mb-3">Detalle de Transacciones del Periodo</h6>
+                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                    <table class="table align-middle table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ID Venta</th>
+                                                <th>Fecha y Hora</th>
+                                                <th>Detalle de Productos</th>
+                                                <th>Método de Pago</th>
+                                                <th>Total</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reportTableBody">
+                                            <!-- Dinámico -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </section>
 
         </main>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle -->
+    <!-- MODAL: Crear/Editar Comida -->
+    <div class="modal fade" id="productModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="productModalTitle">Nueva Comida o Snack</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        <input type="hidden" id="productId">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nombre del Plato / Snack</label>
+                            <input type="text" class="form-control" id="productName" required placeholder="Ej. Hamburguesa Clásica">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Categoría</label>
+                            <select class="form-select" id="productCategory" required>
+                                <option value="Comidas Rápidas">Comidas Rápidas</option>
+                                <option value="Snacks">Snacks & Piqueos</option>
+                                <option value="Bebidas">Bebidas y Jugos</option>
+                                <option value="Postres">Postres</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Precio (Bs)</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="productPrice" required placeholder="0.00">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">URL de la Imagen de Ejemplo</label>
+                            <input type="url" class="form-control" id="productImage" required placeholder="https://images.unsplash.com/...">
+                            <div class="form-text">Puedes usar imágenes de Unsplash o enlaces públicos.</div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Guardar Plato</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Detalle de Venta (Ticket) -->
+    <div class="modal fade" id="ticketModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Ticket de Venta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4" id="ticketModalBody">
+                    <!-- Dinámico -->
+                </div>
+                <div class="modal-footer border-0 pt-0 flex-column gap-2">
+                    <button type="button" class="btn btn-outline-danger w-100 rounded-pill" id="ticketAnularBtn" onclick="">Anular Ticket</button>
+                    <button type="button" class="btn btn-secondary w-100 rounded-pill m-0" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container">
+        <div id="liveToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage">
+                    Operación realizada exitosamente.
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- App Logic -->
     <script>
-        // --- DATOS INICIALES Y LOCALSTORAGE ---
-        let foods = JSON.parse(localStorage.getItem('snack_foods')) || [
-            { id: 1, name: 'Salteña Tradicional', category: 'Snacks', price: 12.0, image: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400' },
-            { id: 2, name: 'Hamburguesa Completa', category: 'Comidas', price: 25.0, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400' },
-            { id: 3, name: 'Coca-Cola 500ml', category: 'Bebidas', price: 8.0, image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400' },
-            { id: 4, name: 'Empanada de Queso', category: 'Snacks', price: 10.0, image: 'https://images.unsplash.com/photo-1608897013039-887f21d8c804?w=400' }
+        // Datos Iniciales por Defecto (Mock Data) si localStorage está vacío
+        const DEFAULT_PRODUCTS = [
+            { id: 1, name: "Hamburguesa Doble Queso", category: "Comidas Rápidas", price: 45.00, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500&q=80" },
+            { id: 2, name: "Salchipapa Especial", category: "Comidas Rápidas", price: 30.00, image: "https://images.unsplash.com/photo-1585109649139-366815a0d713?auto=format&fit=crop&w=500&q=80" },
+            { id: 3, name: "Papas Fritas Crujientes", category: "Snacks", price: 18.00, image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=500&q=80" },
+            { id: 4, name: "Nachos con Queso Cheddar", category: "Snacks", price: 25.00, image: "https://images.unsplash.com/photo-1582169505505-645050f83a15?auto=format&fit=crop&w=500&q=80" },
+            { id: 5, name: "Gaseosa Coca-Cola 500ml", category: "Bebidas", price: 12.00, image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=500&q=80" },
+            { id: 6, name: "Jugo Natural de Naranja", category: "Bebidas", price: 15.00, image: "https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=500&q=80" },
+            { id: 7, name: "Milkshake de Chocolate", category: "Postres", price: 24.00, image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=500&q=80" },
+            { id: 8, name: "Brownie Fudge Tibio", category: "Postres", price: 20.00, image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=500&q=80" }
         ];
 
-        let sales = JSON.parse(localStorage.getItem('snack_sales')) || [
+        // Ventas iniciales simuladas para hoy, este mes y año actual
+        const todayStr = new Date().toISOString().split('T')[0];
+        const DEFAULT_SALES = [
             {
-                id: 'TICKET-1001',
-                date: new Date().toISOString().split('T')[0], // Hoy
-                timestamp: new Date().toLocaleTimeString(),
-                items: [{ name: 'Salteña Tradicional', qty: 2, price: 12.0, subtotal: 24.0 }],
-                total: 24.0,
-                status: 'Completado'
+                id: "SF-1001",
+                date: todayStr + " 12:30",
+                timestamp: new Date().getTime() - 3600000,
+                items: [{ id: 1, name: "Hamburguesa Doble Queso", price: 45.00, quantity: 2 }],
+                total: 90.00,
+                paymentMethod: "Efectivo",
+                status: "Completada"
+            },
+            {
+                id: "SF-1002",
+                date: todayStr + " 13:15",
+                timestamp: new Date().getTime() - 1800000,
+                items: [
+                    { id: 3, name: "Papas Fritas Crujientes", price: 18.00, quantity: 1 },
+                    { id: 5, name: "Gaseosa Coca-Cola 500ml", price: 12.00, quantity: 1 }
+                ],
+                total: 30.00,
+                paymentMethod: "QR / Transferencia",
+                status: "Completada"
             }
         ];
 
-        let cart = [];
-        let salesChartInstance = null;
+        // Estado Global de la App
+        let appState = {
+            products: JSON.parse(localStorage.getItem('snack_products')) || DEFAULT_PRODUCTS,
+            sales: JSON.parse(localStorage.getItem('snack_sales')) || DEFAULT_SALES,
+            cart: [],
+            currentPosCategory: 'Todos'
+        };
 
-        // Inicialización del Sistema
-        document.addEventListener('DOMContentLoaded', () => {
-            updateCurrentDate();
-            renderDashboard();
-            renderPOSProducts();
-            renderFoodsTable();
-            toggleReportFilterInputs();
-            renderCancellationsTable();
+        let trendChartInstance = null;
+
+        // Guardar en localStorage
+        function saveState() {
+            localStorage.setItem('snack_products', JSON.stringify(appState.products));
+            localStorage.setItem('snack_sales', JSON.stringify(appState.sales));
+        }
+
+        // Mostrar Toast de notificación
+        function showToast(message, isError = false) {
+            const toastEl = document.getElementById('liveToast');
+            const toastMsg = document.getElementById('toastMessage');
+            toastMsg.textContent = message;
+            toastEl.className = `toast align-items-center text-white ${isError ? 'bg-danger' : 'bg-dark'} border-0 shadow-lg`;
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+
+        // Control de navegación entre secciones del Dashboard
+        function switchSection(targetSectionId) {
+            document.querySelectorAll('.app-section').forEach(sec => sec.classList.add('d-none'));
+            document.getElementById(targetSectionId).classList.remove('d-none');
+
+            document.querySelectorAll('#sidebar .nav-link').forEach(link => link.classList.remove('active'));
+            const activeLink = document.querySelector(`#sidebar .nav-link[data-section="${targetSectionId}"]`);
+            if (activeLink) activeLink.classList.add('active');
+
+            // Actualizar título superior
+            const titles = {
+                'dashboard-section': 'Dashboard General',
+                'pos-section': 'Punto de Venta (POS)',
+                'menu-section': 'Catálogo de Comidas y Snacks',
+                'reports-section': 'Reportes y Analíticas de Ventas'
+            };
+            document.getElementById('currentSectionTitle').textContent = titles[targetSectionId] || 'Dashboard';
+
+            // Cerrar sidebar en móvil si está abierto
+            document.getElementById('sidebar').classList.remove('mobile-show');
+
+            // Renderizado específico según sección
+            if (targetSectionId === 'dashboard-section') {
+                updateDashboardKPIs();
+                renderDashboardChart();
+                renderRecentSales();
+            } else if (targetSectionId === 'pos-section') {
+                renderPosCategories();
+                renderPosProducts();
+                renderCart();
+            } else if (targetSectionId === 'menu-section') {
+                renderCatalog();
+            } else if (targetSectionId === 'reports-section') {
+                initReports();
+            }
+        }
+
+        // Event listeners para la navegación del Sidebar
+        document.querySelectorAll('#sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = link.getAttribute('data-section');
+                switchSection(section);
+            });
         });
 
-        function updateCurrentDate() {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('es-ES', options);
-        }
+        // Toggle Sidebar en Desktop y Móvil
+        document.getElementById('sidebarToggleBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('content').classList.toggle('expanded');
+        });
 
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('show');
-        }
+        document.getElementById('sidebarMobileToggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('mobile-show');
+        });
 
-        // Navegación entre vistas
-        function switchView(viewId, element) {
-            document.querySelectorAll('.app-view').forEach(el => el.classList.add('d-none'));
-            document.getElementById(`view-${viewId}`).classList.remove('d-none');
+        // Actualizar métricas KPI (excluyendo tickets anulados)
+        function updateDashboardKPIs() {
+            const now = new Date();
+            const todayDateStr = now.toISOString().split('T')[0];
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
 
-            document.querySelectorAll('#sidebar .nav-link').forEach(el => el.classList.remove('active'));
-            if(element) element.classList.add('active');
+            let dailyTotal = 0, dailyCount = 0;
+            let monthlyTotal = 0;
+            let yearlyTotal = 0;
 
-            const titles = {
-                'dashboard': 'Dashboard General',
-                'pos': 'Punto de Venta (POS)',
-                'reports': 'Reportes Detallados de Ventas',
-                'cancellations': 'Módulo de Anulación de Tickets',
-                'foods': 'Gestión de Catálogo de Comidas'
-            };
-            document.getElementById('page-title').innerText = titles[viewId];
+            appState.sales.forEach(sale => {
+                if (sale.status === 'Anulado') return; // Ignorar ventas anuladas
 
-            if(window.innerWidth < 992) {
-                document.getElementById('sidebar').classList.remove('show');
-            }
+                const saleDatePart = sale.date.split(' ')[0];
+                const saleDateObj = new Date(sale.timestamp || sale.date);
 
-            if(viewId === 'dashboard') renderDashboard();
-            if(viewId === 'reports') loadReports();
-            if(viewId === 'cancellations') renderCancellationsTable();
-        }
+                if (saleDatePart === todayDateStr) {
+                    dailyTotal += sale.total;
+                    dailyCount++;
+                }
 
-        // --- DASHBOARD LOGIC ---
-        function renderDashboard() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const currentMonthStr = todayStr.substring(0, 7);
+                if (saleDateObj.getMonth() === currentMonth && saleDateObj.getFullYear() === currentYear) {
+                    monthlyTotal += sale.total;
+                }
 
-            let todaySales = 0;
-            let monthSales = 0;
-            let todayTicketsCount = 0;
-
-            sales.forEach(s => {
-                if(s.status === 'Completado') {
-                    if(s.date === todayStr) {
-                        todaySales += s.total;
-                        todayTicketsCount++;
-                    }
-                    if(s.date.startsWith(currentMonthStr)) {
-                        monthSales += s.total;
-                    }
+                if (saleDateObj.getFullYear() === currentYear) {
+                    yearlyTotal += sale.total;
                 }
             });
 
-            document.getElementById('dash-today-sales').innerText = `Bs. ${todaySales.toFixed(2)}`;
-            document.getElementById('dash-month-sales').innerText = `Bs. ${monthSales.toFixed(2)}`;
-            document.getElementById('dash-today-tickets').innerText = todayTicketsCount;
-            document.getElementById('dash-total-foods').innerText = foods.length;
-
-            // Renderizar transacciones recientes
-            const recentList = document.getElementById('dash-recent-list');
-            recentList.innerHTML = '';
-            const recentSales = [...sales].reverse().slice(0, 5);
-            if(recentSales.length === 0) {
-                recentList.innerHTML = '<div class="text-muted small text-center py-3">No hay transacciones recientes</div>';
-            } else {
-                recentSales.forEach(s => {
-                    const badgeClass = s.status === 'Anulado' ? 'bg-danger' : 'bg-success';
-                    recentList.innerHTML += `
-                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-0 fw-semibold">${s.id}</h6>
-                                <small class="text-muted">${s.date} ${s.timestamp || ''}</small>
-                            </div>
-                            <div class="text-end">
-                                <span class="fw-bold">Bs. ${s.total.toFixed(2)}</span><br>
-                                <span class="badge ${badgeClass} x-small" style="font-size: 0.65rem;">${s.status}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            renderSalesChart();
+            document.getElementById('kpiDailySales').textContent = `${dailyTotal.toFixed(2)} Bs`;
+            document.getElementById('kpiDailyCount').textContent = `${dailyCount} transacciones hoy`;
+            document.getElementById('kpiMonthlySales').textContent = `${monthlyTotal.toFixed(2)} Bs`;
+            document.getElementById('kpiYearlySales').textContent = `${yearlyTotal.toFixed(2)} Bs`;
+            document.getElementById('kpiProductsCount').textContent = appState.products.length;
         }
 
-        function renderSalesChart() {
-            const ctx = document.getElementById('salesChart').getContext('2d');
+        // Renderizar gráfico de tendencia de ingresos diarios (últimos 7 días)
+        function renderDashboardChart() {
+            const ctx = document.getElementById('dashboardTrendChart').getContext('2d');
             
-            // Generar últimos 7 días
             const labels = [];
             const dataValues = [];
-            for(let i = 6; i >= 0; i--) {
+            for (let i = 6; i >= 0; i--) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const dateStr = d.toISOString().split('T')[0];
-                labels.push(d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
-                
-                const sum = sales.filter(s => s.date === dateStr && s.status === 'Completado')
-                                 .reduce((acc, curr) => acc + curr.total, 0);
+                const labelName = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+                labels.push(labelName);
+
+                let sum = 0;
+                appState.sales.forEach(sale => {
+                    if (sale.status !== 'Anulado' && sale.date.startsWith(dateStr)) {
+                        sum += sale.total;
+                    }
+                });
                 dataValues.push(sum);
             }
 
-            if(salesChartInstance) salesChartInstance.destroy();
+            if (trendChartInstance) {
+                trendChartInstance.destroy();
+            }
 
-            salesChartInstance = new Chart(ctx, {
+            trendChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Ventas Diarias (Bs.)',
+                        label: 'Ingresos (Bs)',
                         data: dataValues,
-                        borderColor: '#ff6b6b',
-                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderColor: '#ff5722',
+                        backgroundColor: 'rgba(255, 87, 34, 0.08)',
                         borderWidth: 3,
                         fill: true,
-                        tension: 0.3
+                        tension: 0.35,
+                        pointBackgroundColor: '#ff5722',
+                        pointRadius: 4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { borderDash: [4, 4] }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
                 }
             });
         }
 
-        // --- POS (REGISTRO DE VENTAS) LOGIC ---
-        function renderPOSProducts(filter = '') {
-            const grid = document.getElementById('pos-products-grid');
-            grid.innerHTML = '';
-            const filtered = foods.filter(f => f.name.toLowerCase().includes(filter.toLowerCase()) || f.category.toLowerCase().includes(filter.toLowerCase()));
+        // Renderizar tabla de ventas recientes en Dashboard
+        function renderRecentSales() {
+            const tbody = document.getElementById('recentSalesTableBody');
+            tbody.innerHTML = '';
 
-            if(filtered.length === 0) {
-                grid.innerHTML = '<div class="col-12 text-center text-muted py-4">No se encontraron comidas o snacks</div>';
+            const recent = [...appState.sales].reverse().slice(0, 5);
+
+            if (recent.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No hay ventas registradas aún.</td></tr>`;
                 return;
             }
 
-            filtered.forEach(f => {
-                grid.innerHTML += `
-                    <div class="col-md-4 col-sm-6">
-                        <div class="product-card card h-100 bg-white" onclick="addToCart(${f.id})">
-                            <img src="${f.image}" class="product-img card-img-top" alt="${f.name}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'">
-                            <div class="card-body p-2 d-flex flex-column">
-                                <span class="badge bg-light text-dark align-self-start mb-1" style="font-size:0.65rem;">${f.category}</span>
-                                <h6 class="card-title text-truncate mb-1 fw-semibold">${f.name}</h6>
-                                <div class="text-danger fw-bold mt-auto">Bs. ${f.price.toFixed(2)}</div>
-                            </div>
+            recent.forEach(sale => {
+                const itemsSummary = sale.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
+                const isAnulado = sale.status === 'Anulado';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <strong>${sale.id}</strong> ${isAnulado ? '<span class="badge bg-danger">Anulado</span>' : ''}<br>
+                        <small class="text-muted">${sale.date}</small>
+                    </td>
+                    <td class="text-truncate" style="max-width: 250px;" title="${itemsSummary}">${itemsSummary}</td>
+                    <td class="fw-bold ${isAnulado ? 'text-decoration-line-through text-muted' : 'text-success'}">${sale.total.toFixed(2)} Bs</td>
+                    <td><span class="badge bg-light text-dark border">${sale.paymentMethod}</span></td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="viewTicket('${sale.id}')"><i class="bi bi-eye"></i> Ticket</button>
+                            ${!isAnulado ? `<button class="btn btn-sm btn-outline-danger rounded-pill" onclick="annulSale('${sale.id}')"><i class="bi bi-x-circle"></i> Anular</button>` : ''}
                         </div>
-                    </div>
+                    </td>
                 `;
+                tbody.appendChild(tr);
             });
         }
 
-        function filterPOSProducts() {
-            const query = document.getElementById('pos-search').value;
-            renderPOSProducts(query);
+        // Renderizar categorías en POS
+        function renderPosCategories() {
+            const container = document.getElementById('posCategoryPills');
+            const categories = ['Todos', ...new Set(appState.products.map(p => p.category))];
+            
+            container.innerHTML = categories.map(cat => `
+                <button class="btn btn-sm ${appState.currentPosCategory === cat ? 'btn-dark' : 'btn-outline-dark'} rounded-pill px-3" onclick="filterPosCategory('${cat}')">${cat}</button>
+            `).join('');
         }
 
-        function addToCart(foodId) {
-            const food = foods.find(f => f.id === foodId);
-            if(!food) return;
+        function filterPosCategory(category) {
+            appState.currentPosCategory = category;
+            renderPosCategories();
+            renderPosProducts();
+        }
 
-            const existing = cart.find(item => item.id === foodId);
-            if(existing) {
-                existing.qty++;
-                existing.subtotal = existing.qty * existing.price;
+        // Renderizar productos en POS
+        function renderPosProducts() {
+            const grid = document.getElementById('posProductsGrid');
+            const searchTerm = document.getElementById('posSearchInput').value.toLowerCase();
+
+            const filtered = appState.products.filter(p => {
+                const matchCat = appState.currentPosCategory === 'Todos' || p.category === appState.currentPosCategory;
+                const matchName = p.name.toLowerCase().includes(searchTerm);
+                return matchCat && matchName;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-12 text-center text-muted py-5">No se encontraron productos disponibles.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(p => `
+                <div class="col-xl-4 col-md-6">
+                    <div class="product-card h-100 d-flex flex-column cursor-pointer" onclick="addToCart(${p.id})">
+                        <div class="product-img-container">
+                            <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/300x200/e2e8f0/64748b?text=Snack'">
+                            <span class="badge bg-dark position-absolute top-0 end-0 m-2">${p.price.toFixed(2)} Bs</span>
+                        </div>
+                        <div class="p-3 d-flex flex-column justify-content-between flex-grow-1">
+                            <h6 class="fw-bold mb-1 text-dark text-truncate">${p.name}</h6>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <small class="text-muted">${p.category}</small>
+                                <button class="btn btn-sm btn-primary rounded-circle"><i class="bi bi-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('posSearchInput').addEventListener('input', () => {
+            renderPosProducts();
+        });
+
+        // Lógica del Carrito
+        function addToCart(productId) {
+            const product = appState.products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existing = appState.cart.find(item => item.id === productId);
+            if (existing) {
+                existing.quantity++;
             } else {
-                cart.push({ id: food.id, name: food.name, price: food.price, qty: 1, subtotal: food.price });
+                appState.cart.push({ ...product, quantity: 1 });
             }
             renderCart();
         }
 
-        function updateCartQty(foodId, change) {
-            const item = cart.find(i => i.id === foodId);
-            if(!item) return;
-            item.qty += change;
-            if(item.qty <= 0) {
-                cart = cart.filter(i => i.id !== foodId);
-            } else {
-                item.subtotal = item.qty * item.price;
+        function updateCartQuantity(productId, delta) {
+            const item = appState.cart.find(i => i.id === productId);
+            if (!item) return;
+
+            item.quantity += delta;
+            if (item.quantity <= 0) {
+                appState.cart = appState.cart.filter(i => i.id !== productId);
             }
+            renderCart();
+        }
+
+        function removeFromCart(productId) {
+            appState.cart = appState.cart.filter(i => i.id !== productId);
+            renderCart();
+        }
+
+        function clearCart() {
+            appState.cart = [];
             renderCart();
         }
 
         function renderCart() {
-            const tbody = document.getElementById('cart-table-body');
-            tbody.innerHTML = '';
+            const container = document.getElementById('cartItemsContainer');
+            const checkoutBtn = document.getElementById('checkoutBtn');
 
-            if(cart.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">El carrito está vacío</td></tr>';
-                document.getElementById('cart-subtotal').innerText = 'Bs. 0.00';
-                document.getElementById('cart-total').innerText = 'Bs. 0.00';
-                return;
-            }
-
-            let total = 0;
-            cart.forEach(item => {
-                total += item.subtotal;
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="text-truncate" style="max-width: 120px;">${item.name}</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="updateCartQty(${item.id}, -1)">-</button>
-                            <span class="mx-1">${item.qty}</span>
-                            <button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="updateCartQty(${item.id}, 1)">+</button>
-                        </td>
-                        <td class="text-end">Bs. ${item.subtotal.toFixed(2)}</td>
-                        <td class="text-end">
-                            <button class="btn btn-sm text-danger p-0" onclick="removeFromCart(${item.id})"><i class="bi bi-trash"></i></button>
-                        </td>
-                    </tr>
+            if (appState.cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-cart-x fs-1 opacity-50"></i>
+                        <p class="mt-2 mb-0">La orden está vacía.<br>Selecciona productos del menú.</p>
+                    </div>
                 `;
-            });
-
-            document.getElementById('cart-subtotal').innerText = `Bs. ${total.toFixed(2)}`;
-            document.getElementById('cart-total').innerText = `Bs. ${total.toFixed(2)}`;
-        }
-
-        function removeFromCart(foodId) {
-            cart = cart.filter(i => i.id !== foodId);
-            renderCart();
-        }
-
-        function checkoutSale() {
-            if(cart.length === 0) {
-                alert('El carrito está vacío.');
+                document.getElementById('cartSubtotal').textContent = '0.00 Bs';
+                document.getElementById('cartTotal').textContent = '0.00 Bs';
+                checkoutBtn.disabled = true;
                 return;
             }
 
-            const total = cart.reduce((acc, curr) => acc + curr.subtotal, 0);
+            checkoutBtn.disabled = false;
+            let subtotal = 0;
+
+            container.innerHTML = appState.cart.map(item => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                return `
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                        <div style="max-width: 150px;">
+                            <h6 class="fw-semibold mb-0 text-truncate" title="${item.name}">${item.name}</h6>
+                            <small class="text-muted">${item.price.toFixed(2)} Bs c/u</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary px-2" onclick="updateCartQuantity(${item.id}, -1)">-</button>
+                                <span class="btn btn-outline-secondary disabled px-2 text-dark fw-bold">${item.quantity}</span>
+                                <button class="btn btn-outline-secondary px-2" onclick="updateCartQuantity(${item.id}, 1)">+</button>
+                            </div>
+                            <span class="fw-bold text-success" style="min-width: 75px; text-align: right;">${itemTotal.toFixed(2)} Bs</span>
+                            <button class="btn btn-sm text-danger" onclick="removeFromCart(${item.id})"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('cartSubtotal').textContent = `${subtotal.toFixed(2)} Bs`;
+            document.getElementById('cartTotal').textContent = `${subtotal.toFixed(2)} Bs`;
+        }
+
+        // Procesar Venta (Checkout)
+        function processCheckout() {
+            if (appState.cart.length === 0) return;
+
+            const total = appState.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0] + ' ' + now.toTimeString().substring(0, 5);
+
             const newSale = {
-                id: 'TICKET-' + Math.floor(1000 + Math.random() * 9000),
-                date: new Date().toISOString().split('T')[0],
-                timestamp: new Date().toLocaleTimeString(),
-                items: [...cart],
+                id: `SF-${Math.floor(1000 + Math.random() * 9000)}`,
+                date: dateStr,
+                timestamp: now.getTime(),
+                items: [...appState.cart],
                 total: total,
-                status: 'Completado'
+                paymentMethod: document.getElementById('paymentMethodSelect').value,
+                status: "Completada"
             };
 
-            sales.push(newSale);
-            localStorage.setItem('snack_sales', JSON.stringify(sales));
+            appState.sales.push(newSale);
+            saveState();
 
-            alert(`¡Venta procesada con éxito! Ticket: ${newSale.id} - Total: Bs. ${total.toFixed(2)}`);
-            cart = [];
+            const completedSaleId = newSale.id;
+            appState.cart = [];
             renderCart();
-            renderDashboard();
+
+            showToast(`¡Venta ${completedSaleId} registrada con éxito!`);
+            viewTicket(completedSaleId);
         }
 
-        // --- REPORTES LOGIC ---
-        function toggleReportFilterInputs() {
-            const type = document.getElementById('report-filter-type').value;
-            const container = document.getElementById('report-input-container');
-            const todayStr = new Date().toISOString().split('T')[0];
+        // Anular Venta
+        function annulSale(saleId) {
+            if (confirm(`¿Estás seguro de anular el ticket ${saleId}? Esta acción no se puede deshacer.`)) {
+                const sale = appState.sales.find(s => s.id === saleId);
+                if (sale) {
+                    sale.status = 'Anulado';
+                    saveState();
+                    
+                    // Actualizar vistas actuales
+                    updateDashboardKPIs();
+                    renderDashboardChart();
+                    renderRecentSales();
+                    
+                    // Si el modal de ticket está abierto para este ticket, actualizarlo también
+                    const activeModalEl = document.getElementById('ticketModal');
+                    const modalInstance = bootstrap.Modal.getInstance(activeModalEl);
+                    if (modalInstance && activeModalEl.classList.contains('show')) {
+                        viewTicket(saleId);
+                    }
 
-            if(type === 'day') {
-                container.innerHTML = `<label class="form-label fw-semibold small">Seleccione Día:</label><input type="date" id="rep-val-day" class="form-control" value="${todayStr}" onchange="loadReports()">`;
-            } else if(type === 'month') {
-                container.innerHTML = `<label class="form-label fw-semibold small">Seleccione Mes:</label><input type="month" id="rep-val-month" class="form-control" value="${todayStr.substring(0,7)}" onchange="loadReports()">`;
-            } else if(type === 'year') {
-                container.innerHTML = `<label class="form-label fw-semibold small">Ingrese Año:</label><input type="number" id="rep-val-year" class="form-control" value="${new Date().getFullYear()}" onchange="loadReports()">`;
+                    // Si estamos en la sección de reportes, actualizar reporte
+                    if (!document.getElementById('reports-section').classList.contains('d-none')) {
+                        generateReport();
+                    }
+
+                    showToast(`Ticket ${saleId} anulado correctamente.`, true);
+                }
+            }
+        }
+
+        // Ver Ticket en Modal
+        function viewTicket(saleId) {
+            const sale = appState.sales.find(s => s.id === saleId);
+            if (!sale) return;
+
+            const modalBody = document.getElementById('ticketModalBody');
+            const anularBtn = document.getElementById('ticketAnularBtn');
+            const isAnulado = sale.status === 'Anulado';
+
+            if (isAnulado) {
+                anularBtn.style.display = 'none';
             } else {
-                container.innerHTML = `<label class="form-label fw-semibold small">&nbsp;</label><div class="text-muted small mt-2">Mostrando todo el histórico acumulado</div>`;
+                anularBtn.style.display = 'block';
+                anularBtn.setAttribute('onclick', `annulSale('${sale.id}');`);
             }
-            loadReports();
+
+            modalBody.innerHTML = `
+                <div class="text-center mb-3">
+                    <i class="bi bi-shop fs-2 text-primary"></i>
+                    <h5 class="fw-bold mb-0 mt-1">SnackFlow POS</h5>
+                    <small class="text-muted">Comprobante de Venta</small>
+                    ${isAnulado ? '<div class="mt-2"><span class="badge bg-danger fs-6 px-3 py-1">TICKET ANULADO</span></div>' : ''}
+                </div>
+                <div class="border-top border-bottom py-2 my-2 small">
+                    <div class="d-flex justify-content-between"><span>Ticket:</span><strong>${sale.id}</strong></div>
+                    <div class="d-flex justify-content-between"><span>Fecha:</span><span>${sale.date}</span></div>
+                    <div class="d-flex justify-content-between"><span>Método Pago:</span><span>${sale.paymentMethod}</span></div>
+                </div>
+                <div class="mb-3">
+                    <small class="fw-bold text-muted uppercase">Detalle de Productos:</small>
+                    <div class="mt-1">
+                        ${sale.items.map(i => `
+                            <div class="d-flex justify-content-between small">
+                                <span>${i.quantity}x${i.name}</span>
+                                <span>${(i.price * i.quantity).toFixed(2)} Bs</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="border-top pt-2 d-flex justify-content-between fw-bold fs-6">
+                    <span>Total Pagado:</span>
+                    <span class="${isAnulado ? 'text-decoration-line-through text-muted' : 'text-primary'}">${sale.total.toFixed(2)} Bs</span>
+                </div>
+                <div class="text-center mt-4">
+                    <small class="text-muted">¡Gracias por su compra!</small>
+                </div>
+            `;
+
+            const ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
+            ticketModal.show();
         }
 
-        function loadReports() {
-            const type = document.getElementById('report-filter-type').value;
-            let filtered = sales;
+        // Renderizar Catálogo de Comidas
+        function renderCatalog() {
+            const grid = document.getElementById('catalogProductsGrid');
 
-            if(type === 'day') {
-                const val = document.getElementById('rep-val-day')?.value || '';
-                filtered = sales.filter(s => s.date === val);
-            } else if(type === 'month') {
-                const val = document.getElementById('rep-val-month')?.value || '';
-                filtered = sales.filter(s => s.date.startsWith(val));
-            } else if(type === 'year') {
-                const val = document.getElementById('rep-val-year')?.value || '';
-                filtered = sales.filter(s => s.date.startsWith(val));
+            if (appState.products.length === 0) {
+                grid.innerHTML = `<div class="col-12 text-center text-muted py-5">No hay platos registrados en el menú.</div>`;
+                return;
             }
 
-            let totalIncome = 0;
-            let totalCount = 0;
-            const tbody = document.getElementById('reports-table-body');
+            grid.innerHTML = appState.products.map(p => `
+                <div class="col-xl-3 col-md-6">
+                    <div class="product-card h-100 d-flex flex-column">
+                        <div class="product-img-container">
+                            <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/300x200/e2e8f0/64748b?text=Snack'">
+                            <span class="badge bg-dark position-absolute top-0 end-0 m-2">${p.price.toFixed(2)} Bs</span>
+                            <span class="badge bg-primary position-absolute top-0 start-0 m-2">${p.category}</span>
+                        </div>
+                        <div class="p-3 d-flex flex-column justify-content-between flex-grow-1">
+                            <h5 class="fw-bold mb-2 text-dark">${p.name}</h5>
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openProductModal(${p.id})">
+                                    <i class="bi bi-pencil me-1"></i>Editar
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="deleteProduct(${p.id})">
+                                    <i class="bi bi-trash me-1"></i>Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openProductModal(productId = null) {
+            const form = document.getElementById('productForm');
+            form.reset();
+            document.getElementById('productId').value = '';
+
+            if (productId) {
+                document.getElementById('productModalTitle').textContent = 'Editar Comida o Snack';
+                const product = appState.products.find(p => p.id === productId);
+                if (product) {
+                    document.getElementById('productId').value = product.id;
+                    document.getElementById('productName').value = product.name;
+                    document.getElementById('productCategory').value = product.category;
+                    document.getElementById('productPrice').value = product.price;
+                    document.getElementById('productImage').value = product.image;
+                }
+            } else {
+                document.getElementById('productModalTitle').textContent = 'Nueva Comida o Snack';
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('productModal'));
+            modal.show();
+        }
+
+        document.getElementById('productForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('productId').value;
+            const name = document.getElementById('productName').value;
+            const category = document.getElementById('productCategory').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const image = document.getElementById('productImage').value;
+
+            if (id) {
+                const product = appState.products.find(p => p.id == id);
+                if (product) {
+                    product.name = name;
+                    product.category = category;
+                    product.price = price;
+                    product.image = image;
+                }
+                showToast('Comida actualizada correctamente.');
+            } else {
+                const newId = appState.products.length > 0 ? Math.max(...appState.products.map(p => p.id)) + 1 : 1;
+                appState.products.push({ id: newId, name, category, price, image });
+                showToast('Nueva comida agregada al menú.');
+            }
+
+            saveState();
+            bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+            renderCatalog();
+        });
+
+        function deleteProduct(productId) {
+            if (confirm('¿Estás seguro de eliminar este producto del menú?')) {
+                appState.products = appState.products.filter(p => p.id !== productId);
+                saveState();
+                renderCatalog();
+                showToast('Producto eliminado del menú.', true);
+            }
+        }
+
+        // Inicializar Reportes
+        function initReports() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('reportDateInput');
+            dateInput.value = today;
+            toggleReportFilters();
+            generateReport();
+        }
+
+        function toggleReportFilters() {
+            const filterType = document.getElementById('reportFilterType').value;
+            const container = document.getElementById('reportValueContainer');
+            const label = document.getElementById('reportValueLabel');
+
+            if (filterType === 'day') {
+                container.style.display = 'block';
+                label.textContent = 'Seleccionar Día';
+                document.getElementById('reportDateInput').type = 'date';
+                if(!document.getElementById('reportDateInput').value) {
+                    document.getElementById('reportDateInput').value = new Date().toISOString().split('T')[0];
+                }
+            } else if (filterType === 'month') {
+                container.style.display = 'block';
+                label.textContent = 'Seleccionar Mes';
+                document.getElementById('reportDateInput').type = 'month';
+                if(!document.getElementById('reportDateInput').value) {
+                    const now = new Date();
+                    document.getElementById('reportDateInput').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}`;
+                }
+            } else if (filterType === 'year') {
+                container.style.display = 'block';
+                label.textContent = 'Escribir Año (Ej. 2026)';
+                document.getElementById('reportDateInput').type = 'number';
+                document.getElementById('reportDateInput').value = new Date().getFullYear();
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        // Generar Reporte (excluyendo ventas anuladas del total de ingresos)
+        function generateReport() {
+            const filterType = document.getElementById('reportFilterType').value;
+            const filterVal = document.getElementById('reportDateInput').value;
+
+            let filteredSales = appState.sales.filter(sale => {
+                const saleDatePart = sale.date.split(' ')[0];
+
+                if (filterType === 'day') {
+                    return saleDatePart === filterVal;
+                } else if (filterType === 'month') {
+                    const saleMonthPart = saleDatePart.substring(0, 7);
+                    return saleMonthPart === filterVal;
+                } else if (filterType === 'year') {
+                    const saleYearPart = saleDatePart.substring(0, 4);
+                    return saleYearPart === filterVal;
+                }
+                return true;
+            });
+
+            // Solo sumar ventas completadas para los ingresos totales y ticket promedio
+            const completedSales = filteredSales.filter(s => s.status !== 'Anulado');
+            const totalRevenue = completedSales.reduce((sum, s) => sum + s.total, 0);
+            const totalTransactions = completedSales.length;
+            const averageTicket = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
+            document.getElementById('reportTotalRevenue').textContent = `${totalRevenue.toFixed(2)} Bs`;
+            document.getElementById('reportTotalTransactions').textContent = totalTransactions;
+            document.getElementById('reportAverageTicket').textContent = `${averageTicket.toFixed(2)} Bs`;
+
+            const tbody = document.getElementById('reportTableBody');
             tbody.innerHTML = '';
 
-            if(filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No hay transacciones registradas para este filtro</td></tr>';
-            } else {
-                filtered.forEach(s => {
-                    if(s.status === 'Completado') {
-                        totalIncome += s.total;
-                        totalCount++;
-                    }
-                    const itemsDesc = s.items.map(i => `${i.qty}x ${i.name}`).join(', ');
-                    const badgeClass = s.status === 'Anulado' ? 'bg-danger' : 'bg-success';
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td class="fw-semibold">${s.id}</td>
-                            <td><small>${s.date} ${s.timestamp || ''}</small></td>
-                            <td><span class="text-truncate d-inline-block" style="max-width: 250px;" title="${itemsDesc}">${itemsDesc}</span></td>
-                            <td class="text-end fw-bold">Bs. ${s.total.toFixed(2)}</td>
-                            <td class="text-center"><span class="badge ${badgeClass}">${s.status}</span></td>
-                        </tr>
-                    `;
-                });
+            if (filteredSales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No se encontraron transacciones para este periodo.</td></tr>`;
+                return;
             }
 
-            const avg = totalCount > 0 ? totalIncome / totalCount : 0;
-            document.getElementById('rep-total-income').innerText = `Bs. ${totalIncome.toFixed(2)}`;
-            document.getElementById('rep-total-count').innerText = totalCount;
-            document.getElementById('rep-avg-ticket').innerText = `Bs. ${avg.toFixed(2)}`;
+            filteredSales.reverse().forEach(sale => {
+                const itemsSummary = sale.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
+                const isAnulado = sale.status === 'Anulado';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${sale.id}</strong> ${isAnulado ? '<span class="badge bg-danger">Anulado</span>' : ''}</td>
+                    <td>${sale.date}</td>
+                    <td>${itemsSummary}</td>
+                    <td><span class="badge bg-light text-dark border">${sale.paymentMethod}</span></td>
+                    <td class="fw-bold ${isAnulado ? 'text-decoration-line-through text-muted' : 'text-success'}">${sale.total.toFixed(2)} Bs</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="viewTicket('${sale.id}')"><i class="bi bi-eye"></i> Ticket</button>
+                            ${!isAnulado ? `<button class="btn btn-sm btn-outline-danger rounded-pill" onclick="annulSale('${sale.id}')"><i class="bi bi-x-circle"></i> Anular</button>` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        function exportReportsCSV() {
-            let csvContent = "data:text/csv;charset=utf-8,ID Ticket,Fecha,Hora,Total,Estado\n";
-            sales.forEach(s => {
-                csvContent += `${s.id},${s.date},${s.timestamp || ''},${s.total},${s.status}\n`;
+        // Exportar Reporte a CSV
+        function exportReportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,ID Venta,Fecha,Productos,Metodo Pago,Estado,Total (Bs)\n";
+            appState.sales.forEach(sale => {
+                const itemsStr = sale.items.map(i => `${i.quantity}x ${i.name}`).join(' | ');
+                csvContent += `"${sale.id}","${sale.date}","${itemsStr}","${sale.paymentMethod}","${sale.status || 'Completada'}",${sale.total}\n`;
             });
+
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "reporte_ventas_snack.csv");
+            link.setAttribute("download", `reporte_ventas_snackflow_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            showToast("Reporte exportado en CSV correctamente.");
         }
 
-        // --- MÓDULO ANULACIÓN DE TICKETS LOGIC ---
-        function renderCancellationsTable(searchQuery = '') {
-            const tbody = document.getElementById('cancellations-table-body');
-            tbody.innerHTML = '';
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            // REGLA: Solo tickets del día actual
-            const todayTickets = sales.filter(s => s.date === todayStr);
-
-            const filtered = todayTickets.filter(s => 
-                s.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                s.status.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-
-            if(filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No hay tickets emitidos el día de hoy disponibles para anulación</td></tr>';
-                return;
-            }
-
-            filtered.forEach(s => {
-                const itemsDesc = s.items.map(i => `${i.qty}x ${i.name}`).join(', ');
-                const isAnulado = s.status === 'Anulado';
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="fw-semibold">${s.id}</td>
-                        <td>${s.timestamp || 'N/A'}</td>
-                        <td><small class="text-muted">${itemsDesc}</small></td>
-                        <td class="text-end fw-bold">Bs. ${s.total.toFixed(2)}</td>
-                        <td class="text-center">
-                            ${isAnulado 
-                                ? '<span class="badge bg-secondary">Ya Anulado</span>'
-                                : `<button class="btn btn-sm btn-outline-danger" onclick="cancelTicket('${s.id}')"><i class="bi bi-x-circle me-1"></i> Anular</button>`
-                            }
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function filterCancellationTickets() {
-            const query = document.getElementById('cancel-search-input').value;
-            renderCancellationsTable(query);
-        }
-
-        function cancelTicket(ticketId) {
-            const ticket = sales.find(s => s.id === ticketId);
-            if(!ticket) return;
-
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            // VALIDACIÓN ESTRICTA DE REGLA: Solo del día
-            if(ticket.date !== todayStr) {
-                alert('Error de Restricción: No se puede anular este ticket porque corresponde a una fecha anterior. La regla solo permite eliminar/anular tickets del día actual.');
-                return;
-            }
-
-            if(confirm(`¿Está seguro de anular el ticket ${ticketId} por un valor de Bs. ${ticket.total.toFixed(2)}?`)) {
-                ticket.status = 'Anulado';
-                localStorage.setItem('snack_sales', JSON.stringify(sales));
-                alert(`Ticket ${ticketId} anulado exitosamente.`);
-                renderCancellationsTable();
-                renderDashboard();
+        // Restaurar Datos de Prueba
+        function resetSampleData() {
+            if (confirm("¿Deseas restablecer los datos de prueba iniciales? Se sobrescribirán los cambios.")) {
+                appState.products = DEFAULT_PRODUCTS;
+                appState.sales = DEFAULT_SALES;
+                saveState();
+                switchSection('dashboard-section');
+                showToast("Datos restaurados exitosamente.");
             }
         }
 
-        // --- GESTIÓN DE COMIDAS LOGIC ---
-        function renderFoodsTable() {
-            const tbody = document.getElementById('foods-table-body');
-            tbody.innerHTML = '';
-
-            if(foods.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No hay comidas registradas</td></tr>';
-                return;
-            }
-
-            foods.forEach(f => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><img src="${f.image}" class="rounded" width="45" height="45" style="object-fit:cover;" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'"></td>
-                        <td class="fw-semibold">${f.name}</td>
-                        <td><span class="badge bg-light text-dark">${f.category}</span></td>
-                        <td>Bs. ${f.price.toFixed(2)}</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editFood(${f.id})"><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFood(${f.id})"><i class="bi bi-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function handleFoodSubmit(event) {
-            event.preventDefault();
-            const id = document.getElementById('food-id').value;
-            const name = document.getElementById('food-name').value;
-            const category = document.getElementById('food-category').value;
-            const price = parseFloat(document.getElementById('food-price').value);
-            const image = document.getElementById('food-image').value;
-
-            if(id) {
-                // Editar
-                const food = foods.find(f => f.id == id);
-                if(food) {
-                    food.name = name;
-                    food.category = category;
-                    food.price = price;
-                    food.image = image;
-                }
-            } else {
-                // Crear
-                const newFood = {
-                    id: foods.length > 0 ? Math.max(...foods.map(f => f.id)) + 1 : 1,
-                    name,
-                    category,
-                    price,
-                    image
-                };
-                foods.push(newFood);
-            }
-
-            localStorage.setItem('snack_foods', JSON.stringify(foods));
-            resetFoodForm();
-            renderFoodsTable();
-            renderPOSProducts();
-            document.getElementById('dash-total-foods').innerText = foods.length;
-        }
-
-        function editFood(id) {
-            const food = foods.find(f => f.id === id);
-            if(!food) return;
-
-            document.getElementById('food-id').value = food.id;
-            document.getElementById('food-name').value = food.name;
-            document.getElementById('food-category').value = food.category;
-            document.getElementById('food-price').value = food.price;
-            document.getElementById('food-image').value = food.image;
-            document.getElementById('food-form-title').innerText = 'Editar Comida / Snack';
-        }
-
-        function deleteFood(id) {
-            if(confirm('¿Está seguro de eliminar este producto del catálogo?')) {
-                foods = foods.filter(f => f.id !== id);
-                localStorage.setItem('snack_foods', JSON.stringify(foods));
-                renderFoodsTable();
-                renderPOSProducts();
-                document.getElementById('dash-total-foods').innerText = foods.length;
-            }
-        }
-
-        function resetFoodForm() {
-            document.getElementById('food-form').reset();
-            document.getElementById('food-id').value = '';
-            document.getElementById('food-form-title').innerText = 'Nueva Comida / Snack';
-        }
+        window.onload = function() {
+            switchSection('dashboard-section');
+        };
     </script>
 </body>
 </html>
